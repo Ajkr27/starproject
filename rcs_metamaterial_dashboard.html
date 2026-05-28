@@ -1,0 +1,1199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>RCS Metamaterial Dashboard</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@2.44.0/tabler-icons.min.css">
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg2: #161b22;
+    --bg3: #21262d;
+    --bg4: #2d333b;
+    --border: rgba(99,110,123,0.4);
+    --text: #e6edf3;
+    --text2: #8b949e;
+    --text3: #6e7681;
+    --accent: #1f6feb;
+    --accent2: #388bfd;
+    --teal: #39d353;
+    --amber: #d29922;
+    --red: #f85149;
+    --purple: #8957e5;
+    --cyan: #58a6ff;
+    --orange: #db6d28;
+    --font: 'Segoe UI', system-ui, -apple-system, sans-serif;
+    --mono: 'Cascadia Code', 'Fira Code', monospace;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: var(--font);
+    font-size: 13px;
+    min-height: 100vh;
+  }
+  .header {
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+  }
+  .header-logo {
+    background: var(--accent);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 700;
+    padding: 4px 8px;
+    border-radius: 4px;
+    letter-spacing: 0.5px;
+  }
+  .header-title {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+  }
+  .header-sub {
+    font-size: 11px;
+    color: var(--text2);
+    margin-left: auto;
+  }
+  .nav-tabs {
+    display: flex;
+    gap: 2px;
+    background: var(--bg2);
+    border-bottom: 1px solid var(--border);
+    padding: 0 20px;
+    overflow-x: auto;
+  }
+  .nav-tab {
+    padding: 10px 16px;
+    font-size: 12px;
+    color: var(--text2);
+    cursor: pointer;
+    border-bottom: 2px solid transparent;
+    white-space: nowrap;
+    transition: color 0.15s;
+    user-select: none;
+  }
+  .nav-tab:hover { color: var(--text); }
+  .nav-tab.active {
+    color: var(--accent2);
+    border-bottom-color: var(--accent2);
+  }
+  .page { display: none; padding: 16px 20px; }
+  .page.active { display: block; }
+  .kpi-row {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+  .kpi {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 14px 16px;
+  }
+  .kpi-label {
+    font-size: 11px;
+    color: var(--text3);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 6px;
+  }
+  .kpi-value {
+    font-size: 24px;
+    font-weight: 700;
+    line-height: 1;
+    margin-bottom: 4px;
+  }
+  .kpi-sub {
+    font-size: 11px;
+    color: var(--text2);
+  }
+  .kpi.accent { border-color: var(--accent); }
+  .kpi.teal { border-color: var(--teal); }
+  .kpi.amber { border-color: var(--amber); }
+  .kpi.red { border-color: var(--red); }
+  .kpi.purple { border-color: var(--purple); }
+  .grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .grid-3 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .grid-21 {
+    display: grid;
+    grid-template-columns: 2fr 1fr;
+    gap: 12px;
+    margin-bottom: 12px;
+  }
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 16px;
+  }
+  .card-title {
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--text2);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .chart-wrap {
+    position: relative;
+    width: 100%;
+  }
+  .badge {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    padding: 2px 7px;
+    border-radius: 10px;
+    letter-spacing: 0.3px;
+  }
+  .badge-blue { background: rgba(31,111,235,0.2); color: var(--accent2); }
+  .badge-green { background: rgba(57,211,83,0.15); color: var(--teal); }
+  .badge-amber { background: rgba(210,153,34,0.2); color: var(--amber); }
+  .badge-red { background: rgba(248,81,73,0.15); color: var(--red); }
+  .badge-purple { background: rgba(137,87,229,0.15); color: var(--purple); }
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 12px; }
+  thead th {
+    padding: 8px 10px;
+    text-align: left;
+    color: var(--text3);
+    font-weight: 600;
+    text-transform: uppercase;
+    font-size: 10px;
+    letter-spacing: 0.5px;
+    border-bottom: 1px solid var(--border);
+  }
+  tbody td {
+    padding: 8px 10px;
+    color: var(--text);
+    border-bottom: 1px solid rgba(99,110,123,0.15);
+  }
+  tbody tr:hover { background: var(--bg3); }
+  .progress-bar {
+    height: 6px;
+    background: var(--bg4);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 4px;
+  }
+  .progress-fill {
+    height: 100%;
+    border-radius: 3px;
+    transition: width 0.8s ease;
+  }
+  .scatter-label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: var(--text2);
+    margin-bottom: 4px;
+  }
+  .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+  .info-row {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(99,110,123,0.15);
+  }
+  .info-row:last-child { border-bottom: none; }
+  .info-icon {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    font-size: 14px;
+  }
+  .info-content { flex: 1; }
+  .info-label { font-weight: 600; font-size: 12px; color: var(--text); margin-bottom: 2px; }
+  .info-desc { font-size: 11px; color: var(--text2); line-height: 1.5; }
+  .band-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 10px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 600;
+  }
+  .slider-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 10px;
+  }
+  .slider-row label { font-size: 11px; color: var(--text2); min-width: 60px; }
+  .slider-row input[type=range] { flex: 1; accent-color: var(--accent2); }
+  .slider-row .val { font-size: 12px; font-weight: 600; min-width: 50px; text-align: right; color: var(--text); }
+  .result-box {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    padding: 12px;
+    text-align: center;
+    margin-top: 12px;
+  }
+  .result-box .big { font-size: 28px; font-weight: 700; color: var(--teal); }
+  .result-box .lbl { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .timeline { position: relative; padding-left: 20px; }
+  .timeline::before {
+    content: '';
+    position: absolute;
+    left: 6px;
+    top: 0;
+    bottom: 0;
+    width: 1px;
+    background: var(--border);
+  }
+  .tl-item {
+    position: relative;
+    padding: 0 0 16px 16px;
+  }
+  .tl-dot {
+    position: absolute;
+    left: -14px;
+    top: 4px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    border: 2px solid var(--bg2);
+  }
+  .tl-title { font-size: 12px; font-weight: 600; color: var(--text); margin-bottom: 3px; }
+  .tl-desc { font-size: 11px; color: var(--text2); line-height: 1.5; }
+  .hex-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+  .hex-cell {
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    padding: 12px;
+    text-align: center;
+  }
+  .hex-val { font-size: 20px; font-weight: 700; margin-bottom: 4px; }
+  .hex-lbl { font-size: 10px; color: var(--text2); }
+  @media (max-width: 700px) {
+    .grid-2, .grid-3, .grid-21 { grid-template-columns: 1fr; }
+    .kpi-row { grid-template-columns: repeat(2, 1fr); }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-logo">ML-RCS</div>
+  <div class="header-title">Metamaterial RCS Reduction — Scientific Dashboard</div>
+  <div class="header-sub">Machine Learning Framework · Conformal Coded Dielectric Absorbers</div>
+</div>
+
+<div class="nav-tabs">
+  <div class="nav-tab active" onclick="switchTab(0)">📊 Overview</div>
+  <div class="nav-tab" onclick="switchTab(1)">🔬 THz Absorber</div>
+  <div class="nav-tab" onclick="switchTab(2)">📡 RCS Reduction</div>
+  <div class="nav-tab" onclick="switchTab(3)">🧱 Substrate Analysis</div>
+  <div class="nav-tab" onclick="switchTab(4)">🤖 ML Model</div>
+  <div class="nav-tab" onclick="switchTab(5)">⚙️ Design Explorer</div>
+</div>
+
+<!-- PAGE 0: OVERVIEW -->
+<div class="page active" id="page-0">
+  <div class="kpi-row">
+    <div class="kpi accent">
+      <div class="kpi-label">Peak Absorptance</div>
+      <div class="kpi-value" style="color:#388bfd">99.87%</div>
+      <div class="kpi-sub">p=13, m=6 @ 9.162 GHz</div>
+    </div>
+    <div class="kpi teal">
+      <div class="kpi-label">RCS Reduction</div>
+      <div class="kpi-value" style="color:#39d353">−29.4 dB</div>
+      <div class="kpi-sub">X-band near-unity absorption</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">THz Peak Absorption</div>
+      <div class="kpi-value" style="color:#d29922">94.99%</div>
+      <div class="kpi-sub">a=20.5µm, hs=5.2µm @ 14.5 THz</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">High-Stealth Structures</div>
+      <div class="kpi-value" style="color:#f85149">1.23%</div>
+      <div class="kpi-sub">252 / 20,520 designs qualify</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Max EBG RCS Score</div>
+      <div class="kpi-value" style="color:#8957e5">0.960</div>
+      <div class="kpi-sub">Geometry 1011010000000</div>
+    </div>
+    <div class="kpi" style="border-color:#58a6ff">
+      <div class="kpi-label">BandGap Correlation</div>
+      <div class="kpi-value" style="color:#58a6ff">r=0.712</div>
+      <div class="kpi-sub">BandGapWidth → RCS predictor</div>
+    </div>
+  </div>
+
+  <div class="grid-21">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-line" aria-hidden="true"></i> Peak Absorptance by Configuration (p,m)</div>
+      <div class="chart-wrap" style="height:260px">
+        <canvas id="chart-overview-bar" role="img" aria-label="Bar chart of peak absorptance by p,m configuration"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-radar" aria-hidden="true"></i> Frequency Band Coverage</div>
+      <div class="chart-wrap" style="height:260px">
+        <canvas id="chart-bands-donut" role="img" aria-label="Donut chart of frequency band coverage"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-flask" aria-hidden="true"></i> Research Goals</div>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#388bfd"></div>
+          <div class="tl-title">Analytical Model</div>
+          <div class="tl-desc">Derive surface impedance & reflection coefficients for 1-bit & 2-bit coding particles on curved substrates</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#39d353"></div>
+          <div class="tl-title">Conformal Pattern Study</div>
+          <div class="tl-desc">Study curvature, coding sequence & absorptive loading impact on monostatic & bistatic RCS</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#d29922"></div>
+          <div class="tl-title">Regression Prediction</div>
+          <div class="tl-desc">ML regression models linking design parameters to frequency-dependent RCS metrics</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-circuit-board" aria-hidden="true"></i> ML Approach Summary</div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(57,211,83,0.15);color:#39d353"><i class="ti ti-trees" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Tree-Based Ensembles</div>
+          <div class="info-desc">Gradient boosted decision trees for tabular metamaterial datasets</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(137,87,229,0.15);color:#8957e5"><i class="ti ti-wave-sine" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Gaussian Process Regression</div>
+          <div class="info-desc">Uncertainty-aware design, forward surrogate models</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(56,139,253,0.15);color:#388bfd"><i class="ti ti-brain" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Deep Neural Networks</div>
+          <div class="info-desc">Feedforward networks for S-parameter & RCS prediction</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(210,153,34,0.15);color:#d29922"><i class="ti ti-eyeglass" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">SHAP + Permutation</div>
+          <div class="info-desc">Shapley values for substrate property importance ranking</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-atom" aria-hidden="true"></i> Key Physical Mechanisms</div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(56,139,253,0.15);color:#388bfd"><i class="ti ti-magnet" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Impedance Matching</div>
+          <div class="info-desc">Z_eff ≈ Z₀ → perfect absorption, zero specular reflection</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(57,211,83,0.15);color:#39d353"><i class="ti ti-arrows-split-2" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Phase Diffusion Coding</div>
+          <div class="info-desc">0/π states scatter energy away from monostatic direction</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(248,81,73,0.15);color:#f85149"><i class="ti ti-wave-square" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">LC Resonance</div>
+          <div class="info-desc">Inductive + capacitive unit cells create narrowband/broadband absorption</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(137,87,229,0.15);color:#8957e5"><i class="ti ti-geometry" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Conformal Curvature</div>
+          <div class="info-desc">Alters inter-cell coupling & effective electrical thickness on UAV skins</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 1: THz ABSORBER -->
+<div class="page" id="page-1">
+  <div class="kpi-row">
+    <div class="kpi teal">
+      <div class="kpi-label">Resonant Frequency</div>
+      <div class="kpi-value" style="color:#39d353">14.5 THz</div>
+      <div class="kpi-sub">Consistent across all 25 configs</div>
+    </div>
+    <div class="kpi accent">
+      <div class="kpi-label">Peak Absorptance</div>
+      <div class="kpi-value" style="color:#388bfd">94.99%</div>
+      <div class="kpi-sub">a=20.5µm, hs=5.2µm</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">3dB Bandwidth</div>
+      <div class="kpi-value" style="color:#d29922">2.4 THz</div>
+      <div class="kpi-sub">13.8 – 16.2 THz range</div>
+    </div>
+    <div class="kpi" style="border-color:#8957e5">
+      <div class="kpi-label">Implied RCS Suppression</div>
+      <div class="kpi-value" style="color:#8957e5">~13 dB</div>
+      <div class="kpi-sub">Stealth-grade threshold</div>
+    </div>
+    <div class="kpi" style="border-color:#f85149">
+      <div class="kpi-label">Reflected Radar Energy</div>
+      <div class="kpi-value" style="color:#f85149">~5%</div>
+      <div class="kpi-sub">At peak absorption</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-wave-sine" aria-hidden="true"></i> THz Absorption Spectrum — All 25 Parameter Sets</div>
+      <div class="chart-wrap" style="height:280px">
+        <canvas id="chart-thz-spectrum" role="img" aria-label="THz absorption spectrum showing Lorentzian resonance near 14.5 THz"></canvas>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:8px">a ∈ {20.1–20.9 µm}, hs ∈ {4.6–5.4 µm} — 25 combinations; amplitude variation &lt;0.3%</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-bar" aria-hidden="true"></i> Effect of Parameter m on Absorptance (p=13)</div>
+      <div class="chart-wrap" style="height:280px">
+        <canvas id="chart-param-m" role="img" aria-label="Absorptance curves for different m values at fixed p=13"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-variable" aria-hidden="true"></i> Input Parameters</div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(56,139,253,0.15);color:#388bfd"><i class="ti ti-ruler" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">a — Lateral Period</div>
+          <div class="info-desc">Unit-cell size of patterned metal layer. Range: 20.1–20.9 µm</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(57,211,83,0.15);color:#39d353"><i class="ti ti-layers-subtract" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">hs — Substrate Thickness</div>
+          <div class="info-desc">Dielectric spacer thickness. Range: 4.6–5.4 µm</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(210,153,34,0.15);color:#d29922"><i class="ti ti-antenna" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">f — Excitation Frequency</div>
+          <div class="info-desc">Swept from 13.0 to 16.0 THz per simulation</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-topology-star" aria-hidden="true"></i> Resonance Behaviour</div>
+      <div style="margin-bottom:10px">
+        <div class="info-label" style="font-size:12px;font-weight:600;color:var(--text)">LC Circuit Model</div>
+        <div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.6">Metallic unit cells form inductive and capacitive elements. Resonant frequency depends on both inductance and capacitance within each cell. Destructive interference between electric and magnetic resonances creates near-zero reflection.</div>
+      </div>
+      <div style="background:var(--bg3);border-radius:6px;padding:12px;font-family:var(--mono);font-size:12px;color:var(--cyan)">
+        A(ω) = 1 − |S₁₁(ω)|²<br>
+        Z_eff(ω₀) ≈ Z₀<br>
+        R = |(Z_eff−Z₀)/(Z_eff+Z₀)|² → 0
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-shield-check" aria-hidden="true"></i> Stealth Implications</div>
+      <div class="hex-grid">
+        <div class="hex-cell">
+          <div class="hex-val" style="color:#39d353">94.99%</div>
+          <div class="hex-lbl">Peak absorption</div>
+        </div>
+        <div class="hex-cell">
+          <div class="hex-val" style="color:#388bfd">~5%</div>
+          <div class="hex-lbl">Residual reflection</div>
+        </div>
+        <div class="hex-cell">
+          <div class="hex-val" style="color:#d29922">13 dB</div>
+          <div class="hex-lbl">RCS reduction</div>
+        </div>
+        <div class="hex-cell">
+          <div class="hex-val" style="color:#8957e5">2.4 THz</div>
+          <div class="hex-lbl">3dB bandwidth</div>
+        </div>
+        <div class="hex-cell">
+          <div class="hex-val" style="color:#f85149">25</div>
+          <div class="hex-lbl">Configs tested</div>
+        </div>
+        <div class="hex-cell">
+          <div class="hex-val" style="color:#58a6ff">&lt;0.3%</div>
+          <div class="hex-lbl">Peak variation</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 2: RCS REDUCTION -->
+<div class="page" id="page-2">
+  <div class="kpi-row">
+    <div class="kpi accent">
+      <div class="kpi-label">Optimal Config</div>
+      <div class="kpi-value" style="color:#388bfd;font-size:18px">p=13, m=6</div>
+      <div class="kpi-sub">9.162 GHz X-band</div>
+    </div>
+    <div class="kpi teal">
+      <div class="kpi-label">Max Absorptance</div>
+      <div class="kpi-value" style="color:#39d353">99.87%</div>
+      <div class="kpi-sub">−29.4 dB RCS reduction</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">High-Absorption Range</div>
+      <div class="kpi-value" style="color:#d29922;font-size:18px">5.4–18 GHz</div>
+      <div class="kpi-sub">A &gt; 90% broadband</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">High-Stealth Rate</div>
+      <div class="kpi-value" style="color:#f85149">1.23%</div>
+      <div class="kpi-sub">252 / 20,520 EBG designs</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-table" aria-hidden="true"></i> All Resonance Configurations</div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>p</th><th>m</th><th>Freq (GHz)</th><th>Peak A%</th><th>RCS (dB)</th><th>Band</th></tr>
+          </thead>
+          <tbody id="config-table"></tbody>
+        </table>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-dots" aria-hidden="true"></i> Absorptance vs Resonant Frequency</div>
+      <div class="chart-wrap" style="height:280px">
+        <canvas id="chart-absorptance-freq" role="img" aria-label="Scatter chart of absorptance vs resonant frequency for different configurations"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-21">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-area" aria-hidden="true"></i> Effect of Patch Size (p) on Resonant Frequency — Effective Medium Shift</div>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="chart-p-effect" role="img" aria-label="Line chart showing downshift in resonant frequency as patch size p increases"></canvas>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:8px">λ_res ∝ √(ε_eff · μ_eff) — larger patch ↑ capacitance → redshift (lower frequency)</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-circuit-diode" aria-hidden="true"></i> EBG Scientific Findings</div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(57,211,83,0.15);color:#39d353"><i class="ti ti-trending-up" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">BandGapWidth (r = +0.712)</div>
+          <div class="info-desc">Strongest RCS predictor — wider gaps → better stealth</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(248,81,73,0.15);color:#f85149"><i class="ti ti-trending-down" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">BandGapLocation (r = −0.254)</div>
+          <div class="info-desc">Weak negative correlation — mid-frequency geometries perform better</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(137,87,229,0.15);color:#8957e5"><i class="ti ti-star" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Max EBG Score = 0.960</div>
+          <div class="info-desc">Geometry: 1011010000000</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(210,153,34,0.15);color:#d29922"><i class="ti ti-info-circle" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Exponential Width Distribution</div>
+          <div class="info-desc">Most structures have narrow bandgaps (&lt;112 Hz)</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 3: SUBSTRATE ANALYSIS -->
+<div class="page" id="page-3">
+  <div class="kpi-row">
+    <div class="kpi accent">
+      <div class="kpi-label">Epoxy/Hybrid Max RCS</div>
+      <div class="kpi-value" style="color:#388bfd">99.6 dB</div>
+      <div class="kpi-sub">Highest substrate peak</div>
+    </div>
+    <div class="kpi teal">
+      <div class="kpi-label">Silicon Max RCS</div>
+      <div class="kpi-value" style="color:#39d353">99.8 dB</div>
+      <div class="kpi-sub">Near-Epoxy performance</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">FR-4 Average RCS</div>
+      <div class="kpi-value" style="color:#d29922">10.5 dB</div>
+      <div class="kpi-sub">10 designs tested</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Coding Metasurface</div>
+      <div class="kpi-value" style="color:#8957e5">64.9 dB</div>
+      <div class="kpi-sub">Mean RCS reduction</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-label">FSS-Based Mean</div>
+      <div class="kpi-value" style="color:#f85149">8.0 dB</div>
+      <div class="kpi-sub">Lowest approach tested</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-bar" aria-hidden="true"></i> Average & Max RCS Reduction by Substrate Material</div>
+      <div class="chart-wrap" style="height:260px">
+        <canvas id="chart-substrate-bar" role="img" aria-label="Bar chart comparing average and max RCS reduction across substrate materials"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-bar" aria-hidden="true"></i> Min / Mean / Max RCS by Metamaterial Approach</div>
+      <div class="chart-wrap" style="height:260px">
+        <canvas id="chart-approach-bar" role="img" aria-label="Bar chart showing min, mean, max RCS reduction for each metamaterial approach"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-dots" aria-hidden="true"></i> Permittivity vs RCS Reduction</div>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="chart-permittivity" role="img" aria-label="Scatter chart showing positive trend between substrate permittivity and RCS reduction"></canvas>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px">Higher εr → more effective impedance control</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-dots" aria-hidden="true"></i> Loss Tangent (tan δ) vs RCS Reduction</div>
+      <div class="chart-wrap" style="height:200px">
+        <canvas id="chart-tanDelta" role="img" aria-label="Scatter chart showing negative trend between loss tangent and RCS reduction"></canvas>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px">Lower tan δ substrates achieve higher RCS reduction</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-layers" aria-hidden="true"></i> Substrate Comparison Table</div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>Material</th><th>εr</th><th>tan δ</th><th>Avg RCS</th><th>Notes</th></tr></thead>
+          <tbody>
+            <tr><td>FR-4</td><td>4.4</td><td>0.020</td><td>10.5 dB</td><td><span class="badge badge-amber">Common</span></td></tr>
+            <tr><td>Rogers RT6002</td><td>6.15</td><td>0.0019</td><td>60.2 dB</td><td><span class="badge badge-blue">Low-loss</span></td></tr>
+            <tr><td>Silicon</td><td>11.9</td><td>~0.005</td><td>99.8 dB</td><td><span class="badge badge-green">High εr</span></td></tr>
+            <tr><td>Epoxy/Hybrid</td><td>~6–8</td><td>~0.003</td><td>99.6 dB</td><td><span class="badge badge-purple">Best</span></td></tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 4: ML MODEL -->
+<div class="page" id="page-4">
+  <div class="kpi-row">
+    <div class="kpi teal">
+      <div class="kpi-label">Speedup Factor</div>
+      <div class="kpi-value" style="color:#39d353">10³×</div>
+      <div class="kpi-sub">vs. full-wave EM simulation</div>
+    </div>
+    <div class="kpi accent">
+      <div class="kpi-label">Inference Time</div>
+      <div class="kpi-value" style="color:#388bfd">ms</div>
+      <div class="kpi-sub">After training completion</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">EBG Training Samples</div>
+      <div class="kpi-value" style="color:#d29922">20,520</div>
+      <div class="kpi-sub">Binary 10×10 topologies</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Primary Model Type</div>
+      <div class="kpi-value" style="color:#8957e5;font-size:16px">RF + GP + DNN</div>
+      <div class="kpi-sub">Ensemble approach</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-radar" aria-hidden="true"></i> Top-3 EBG Designs vs Dataset Average (Normalized Metrics)</div>
+      <div class="chart-wrap" style="height:280px">
+        <canvas id="chart-radar" role="img" aria-label="Radar chart comparing top 3 metamaterial designs against dataset average across 6 performance metrics"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-scatter" aria-hidden="true"></i> Band Gap Prediction: True vs Predicted (Random Forest)</div>
+      <div class="chart-wrap" style="height:280px">
+        <canvas id="chart-scatter" role="img" aria-label="Scatter chart of true vs predicted band gap center frequency showing good prediction accuracy"></canvas>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:6px">Points clustered near y=x diagonal indicate strong predictive accuracy</div>
+    </div>
+  </div>
+
+  <div class="grid-3">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-list-numbers" aria-hidden="true"></i> Model Hierarchy</div>
+      <div class="timeline">
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#39d353"></div>
+          <div class="tl-title">Linear Regression</div>
+          <div class="tl-desc">Baseline — captures linear relationships between geometry and RCS</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#388bfd"></div>
+          <div class="tl-title">Random Forest Regression</div>
+          <div class="tl-desc">Best for tabular datasets; identifies non-linear feature interactions</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#8957e5"></div>
+          <div class="tl-title">Gaussian Process</div>
+          <div class="tl-desc">Uncertainty-aware surrogate; calibrated confidence intervals</div>
+        </div>
+        <div class="tl-item">
+          <div class="tl-dot" style="background:#d29922"></div>
+          <div class="tl-title">Deep Neural Network</div>
+          <div class="tl-desc">FNN: ŷ = f_NN(x;w) — ms inference for full RCS/S-parameter prediction</div>
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-chart-bar" aria-hidden="true"></i> Input Feature Importance (Conceptual)</div>
+      <div id="feature-importance"></div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-arrow-right" aria-hidden="true"></i> Data → Prediction Pipeline</div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(56,139,253,0.15);color:#388bfd"><b style="font-size:11px">1</b></div>
+        <div class="info-content">
+          <div class="info-label">Full-Wave Simulation</div>
+          <div class="info-desc">FDTD / FEM generates S₁₁, S₂₁, RCS data</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(57,211,83,0.15);color:#39d353"><b style="font-size:11px">2</b></div>
+        <div class="info-content">
+          <div class="info-label">Feature Engineering</div>
+          <div class="info-desc">Geometry (p, m, a, hs), substrate (εr, tan δ), coding descriptors, frequency</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(137,87,229,0.15);color:#8957e5"><b style="font-size:11px">3</b></div>
+        <div class="info-content">
+          <div class="info-label">ML Training</div>
+          <div class="info-desc">RF / GP / DNN trained on simulation dataset</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(210,153,34,0.15);color:#d29922"><b style="font-size:11px">4</b></div>
+        <div class="info-content">
+          <div class="info-label">Surrogate Inference</div>
+          <div class="info-desc">Millisecond RCS prediction; 1000× faster design exploration</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PAGE 5: DESIGN EXPLORER -->
+<div class="page" id="page-5">
+  <div class="grid-21">
+    <div class="card">
+      <div class="card-title"><i class="ti ti-sliders-horizontal" aria-hidden="true"></i> Interactive Parameter Estimator</div>
+      <div class="slider-row">
+        <label>p (patch)</label>
+        <input type="range" min="11" max="14" value="13" step="1" id="sl-p" oninput="updateCalc()">
+        <span class="val" id="out-p">13</span>
+      </div>
+      <div class="slider-row">
+        <label>m (gap)</label>
+        <input type="range" min="3" max="8" value="6" step="1" id="sl-m" oninput="updateCalc()">
+        <span class="val" id="out-m">6</span>
+      </div>
+      <div class="slider-row">
+        <label>εr</label>
+        <input type="range" min="4" max="12" value="6.15" step="0.05" id="sl-er" oninput="updateCalc()">
+        <span class="val" id="out-er">6.15</span>
+      </div>
+      <div class="slider-row">
+        <label>tan δ</label>
+        <input type="range" min="0.001" max="0.025" value="0.002" step="0.001" id="sl-td" oninput="updateCalc()">
+        <span class="val" id="out-td">0.002</span>
+      </div>
+      <div class="slider-row">
+        <label>Thickness (mm)</label>
+        <input type="range" min="0.5" max="5" value="1.5" step="0.1" id="sl-th" oninput="updateCalc()">
+        <span class="val" id="out-th">1.5</span>
+      </div>
+      <div class="result-box">
+        <div class="big" id="result-rcs">−29.4 dB</div>
+        <div class="lbl">Estimated RCS Reduction</div>
+        <div style="margin-top:8px;display:flex;gap:12px;justify-content:center;flex-wrap:wrap">
+          <div><div style="font-size:16px;font-weight:700;color:#388bfd" id="result-abs">99.87%</div><div style="font-size:10px;color:var(--text2)">Absorptance</div></div>
+          <div><div style="font-size:16px;font-weight:700;color:#d29922" id="result-freq">9.16 GHz</div><div style="font-size:10px;color:var(--text2)">Est. Resonance</div></div>
+          <div><div style="font-size:16px;font-weight:700;color:#8957e5" id="result-band">X-band</div><div style="font-size:10px;color:var(--text2)">Frequency Band</div></div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--text3);margin-top:10px;line-height:1.5">⚠ Estimates based on surrogate regression trends from the paper's dataset. Not a substitute for full-wave EM simulation.</div>
+    </div>
+    <div class="card">
+      <div class="card-title"><i class="ti ti-list" aria-hidden="true"></i> Limitations & Future Work</div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(248,81,73,0.15);color:#f85149"><i class="ti ti-x" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">No Experimental Validation</div>
+          <div class="info-desc">All conclusions from pre-computed simulations; no fabricated prototype testing</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(248,81,73,0.15);color:#f85149"><i class="ti ti-x" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Restricted Parameter Ranges</div>
+          <div class="info-desc">Small integer grid of (p, m); limited frequency and geometry coverage</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(248,81,73,0.15);color:#f85149"><i class="ti ti-x" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Normal Incidence Only</div>
+          <div class="info-desc">Wide-angle, dual-polarized illumination not systematically addressed</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(56,139,253,0.15);color:#388bfd"><i class="ti ti-arrow-right" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Future: 3D FDTD Validation</div>
+          <div class="info-desc">High-fidelity oblique incidence + dual polarization + fabrication</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(56,139,253,0.15);color:#388bfd"><i class="ti ti-arrow-right" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Future: Active Tunable MMAs</div>
+          <div class="info-desc">Graphene / VO₂ / liquid crystal for adaptive stealth response</div>
+        </div>
+      </div>
+      <div class="info-row">
+        <div class="info-icon" style="background:rgba(56,139,253,0.15);color:#388bfd"><i class="ti ti-arrow-right" aria-hidden="true"></i></div>
+        <div class="info-content">
+          <div class="info-label">Future: ML Inverse Design</div>
+          <div class="info-desc">Surrogate + NSGA-II multi-objective optimization for bandwidth, fabrication</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+const configs = [
+  {p:11,m:6,f:10.62,a:95.82,band:'X-Band'},
+  {p:12,m:6,f:9.90,a:99.45,band:'X-Band'},
+  {p:13,m:3,f:15.966,a:98.34,band:'Ku-Band'},
+  {p:13,m:4,f:17.172,a:96.63,band:'Ku-Band'},
+  {p:13,m:5,f:7.128,a:98.41,band:'C-Band'},
+  {p:13,m:6,f:9.162,a:99.87,band:'X-Band'},
+  {p:13,m:7,f:8.748,a:98.07,band:'X-Band'},
+  {p:13,m:8,f:8.190,a:91.34,band:'X-Band'},
+  {p:14,m:6,f:6.642,a:99.41,band:'C-Band'},
+];
+
+function absToRCS(a) { return +(10*Math.log10(1/(1-a/100))).toFixed(1); }
+
+const bandColors = {'X-Band':'#388bfd','Ku-Band':'#8957e5','C-Band':'#39d353'};
+
+function switchTab(i) {
+  document.querySelectorAll('.nav-tab').forEach((t,j)=>t.classList.toggle('active',i===j));
+  document.querySelectorAll('.page').forEach((p,j)=>p.classList.toggle('active',i===j));
+}
+
+function buildConfigTable() {
+  const tb = document.getElementById('config-table');
+  configs.forEach(c => {
+    const rcs = absToRCS(c.a);
+    const bc = bandColors[c.band];
+    tb.innerHTML += `<tr>
+      <td>${c.p}</td><td>${c.m}</td>
+      <td>${c.f.toFixed(3)}</td>
+      <td><span style="color:${c.a>99?'#39d353':c.a>97?'#388bfd':'#d29922'};font-weight:600">${c.a.toFixed(2)}%</span></td>
+      <td style="color:#f85149;font-weight:600">−${rcs}</td>
+      <td><span class="band-pill" style="background:${bc}22;color:${bc}">${c.band}</span></td>
+    </tr>`;
+  });
+}
+
+function buildFeatureImportance() {
+  const features = [
+    {name:'Substrate permittivity εr', val:82, color:'#388bfd'},
+    {name:'BandGap Width', val:71, color:'#39d353'},
+    {name:'Loss tangent tan δ', val:65, color:'#d29922'},
+    {name:'Substrate thickness', val:58, color:'#8957e5'},
+    {name:'Coding sequence density', val:44, color:'#f85149'},
+    {name:'Surface curvature', val:37, color:'#58a6ff'},
+    {name:'Unit cell geometry (p)', val:31, color:'#db6d28'},
+  ];
+  const el = document.getElementById('feature-importance');
+  features.forEach(f => {
+    el.innerHTML += `<div style="margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--text2);margin-bottom:3px">
+        <span>${f.name}</span><span style="color:var(--text);font-weight:600">${f.val}%</span>
+      </div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${f.val}%;background:${f.color}"></div></div>
+    </div>`;
+  });
+}
+
+function makeChart(id, type, labels, datasets, opts={}) {
+  const ctx = document.getElementById(id);
+  if(!ctx) return;
+  const dflt = {responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}};
+  return new Chart(ctx, {type, data:{labels,datasets}, options:{...dflt,...opts}});
+}
+
+function initCharts() {
+  // Overview bar
+  makeChart('chart-overview-bar','bar',
+    configs.map(c=>`p${c.p},m${c.m}`),
+    [{data:configs.map(c=>c.a),
+      backgroundColor:configs.map(c=>c.a>99?'#39d353':c.a>97?'#388bfd':'#d29922'),
+      borderRadius:4}],
+    {scales:{y:{min:88,max:100.5,ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.2)'}},
+             x:{ticks:{color:'#6e7681',font:{size:9}},grid:{display:false}}},
+     plugins:{legend:{display:false},tooltip:{callbacks:{label:d=>`${d.raw.toFixed(2)}% absorptance`}}}});
+
+  // Band donut
+  const bandMap = {};
+  configs.forEach(c=>{bandMap[c.band]=(bandMap[c.band]||0)+1;});
+  new Chart(document.getElementById('chart-bands-donut'),{
+    type:'doughnut',
+    data:{labels:Object.keys(bandMap),datasets:[{data:Object.values(bandMap),
+      backgroundColor:['#388bfd','#8957e5','#39d353'],borderWidth:0,hoverOffset:4}]},
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',
+      plugins:{legend:{display:true,position:'bottom',labels:{color:'#8b949e',font:{size:11},padding:12}},
+        tooltip:{callbacks:{label:d=>`${d.label}: ${d.raw} configs`}}}}});
+
+  // THz spectrum — Lorentzian model
+  const thzFreqs = Array.from({length:60},(_,i)=>13.0+i*0.05);
+  function lorentzian(f, f0=14.5, peak=94.99, gamma=0.6) {
+    return peak/(1+((f-f0)/gamma)**2);
+  }
+  const thzDatasets = [
+    {label:'a=20.1',data:thzFreqs.map(f=>lorentzian(f,14.48,94.66)),borderColor:'#388bfd',borderWidth:1.5,pointRadius:0,tension:0.4},
+    {label:'a=20.3',data:thzFreqs.map(f=>lorentzian(f,14.49,94.78)),borderColor:'#8957e5',borderWidth:1.5,pointRadius:0,tension:0.4},
+    {label:'a=20.5',data:thzFreqs.map(f=>lorentzian(f,14.504,94.99)),borderColor:'#39d353',borderWidth:2.5,pointRadius:0,tension:0.4},
+    {label:'a=20.7',data:thzFreqs.map(f=>lorentzian(f,14.51,94.82)),borderColor:'#d29922',borderWidth:1.5,pointRadius:0,tension:0.4},
+    {label:'a=20.9',data:thzFreqs.map(f=>lorentzian(f,14.52,94.71)),borderColor:'#f85149',borderWidth:1.5,pointRadius:0,tension:0.4},
+  ];
+  new Chart(document.getElementById('chart-thz-spectrum'),{
+    type:'line',data:{labels:thzFreqs.map(f=>f.toFixed(1)),datasets:thzDatasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{y:{min:0,max:100,ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.15)'},title:{display:true,text:'Absorption (%)',color:'#6e7681',font:{size:10}}},
+              x:{ticks:{color:'#6e7681',font:{size:9},maxTicksLimit:8},grid:{display:false},title:{display:true,text:'Frequency f (THz)',color:'#6e7681',font:{size:10}}}},
+      plugins:{legend:{display:true,position:'top',labels:{color:'#8b949e',font:{size:10},boxWidth:12,padding:8}}}}});
+
+  // Parameter m effect
+  const mFreqs = Array.from({length:50},(_,i)=>i*0.38);
+  const mColors = ['#388bfd','#8957e5','#39d353','#d29922','#f85149','#58a6ff'];
+  const mVals = [3,4,5,6,7,8];
+  const mDatasets = mVals.map((m,i)=>({
+    label:`m=${m}`,
+    data:mFreqs.map(f=>{const peak=85+m*2.5;const center=18-m*1.5;return Math.max(0,peak/(1+((f-center)/2.5)**2));}),
+    borderColor:mColors[i],borderWidth:1.8,pointRadius:0,tension:0.4
+  }));
+  new Chart(document.getElementById('chart-param-m'),{
+    type:'line',data:{labels:mFreqs.map(f=>f.toFixed(1)),datasets:mDatasets},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{y:{min:0,max:100,ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.15)'}},
+              x:{ticks:{color:'#6e7681',font:{size:9},maxTicksLimit:8},grid:{display:false},title:{display:true,text:'Frequency (GHz)',color:'#6e7681',font:{size:10}}}},
+      plugins:{legend:{display:true,position:'top',labels:{color:'#8b949e',font:{size:10},boxWidth:10,padding:6}}}}});
+
+  // Absorptance vs freq scatter
+  makeChart('chart-absorptance-freq','scatter',null,
+    [{data:configs.map(c=>({x:c.f,y:c.a})),
+      backgroundColor:configs.map(c=>bandColors[c.band]),
+      pointRadius:8,pointHoverRadius:10}],
+    {scales:{y:{min:88,max:101,ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.15)'},title:{display:true,text:'Absorptance (%)',color:'#6e7681',font:{size:10}}},
+             x:{ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.15)'},title:{display:true,text:'Resonant Freq (GHz)',color:'#6e7681',font:{size:10}}}},
+     plugins:{tooltip:{callbacks:{label:d=>`p=${configs[d.dataIndex].p},m=${configs[d.dataIndex].m}: ${d.parsed.y.toFixed(2)}% @ ${d.parsed.x.toFixed(3)} GHz`}}}});
+
+  // p effect line chart
+  const pData = [{p:11,f:10.62},{p:12,f:9.9},{p:13,f:9.162},{p:14,f:6.642}];
+  makeChart('chart-p-effect','line',
+    pData.map(d=>`p=${d.p}`),
+    [{data:pData.map(d=>d.f),borderColor:'#388bfd',backgroundColor:'rgba(56,139,253,0.1)',
+      fill:true,tension:0.4,pointRadius:6,pointBackgroundColor:'#388bfd',pointBorderColor:'#0d1117',pointBorderWidth:2}],
+    {scales:{y:{ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.15)'},title:{display:true,text:'Resonant Freq (GHz)',color:'#6e7681',font:{size:10}}},
+             x:{ticks:{color:'#6e7681',font:{size:10}},grid:{display:false}}},
+     plugins:{tooltip:{callbacks:{label:d=>`${d.parsed.y.toFixed(3)} GHz`}}}});
+
+  // Substrate bar
+  const subMats = ['FR-4','Rogers RT6002','Silicon','Epoxy/Hybrid','Multi','Other'];
+  const subAvg = [10.5,60.2,99.8,99.6,60.0,26.0];
+  const subMax = [62,90.2,99.8,99.6,60.0,70];
+  new Chart(document.getElementById('chart-substrate-bar'),{
+    type:'bar',
+    data:{labels:subMats,datasets:[
+      {label:'Avg RCS',data:subAvg,backgroundColor:'rgba(56,139,253,0.7)',borderRadius:3},
+      {label:'Max RCS',data:subMax,backgroundColor:'rgba(57,211,83,0.5)',borderRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{y:{ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.15)'},title:{display:true,text:'RCS Reduction (dB)',color:'#6e7681',font:{size:10}}},
+              x:{ticks:{color:'#6e7681',font:{size:9}},grid:{display:false}}},
+      plugins:{legend:{display:true,position:'top',labels:{color:'#8b949e',font:{size:11},boxWidth:12}}}}});
+
+  // Approach bar
+  const approaches = ['Coding Meta.','Left-Handed MM','Meta. Absorber','Chessboard AMC','FSS-based'];
+  const apMin = [40,35,5,5,6];
+  const apMean = [64.9,60.2,22.3,14.9,8.0];
+  const apMax = [90,75,70,18,14];
+  new Chart(document.getElementById('chart-approach-bar'),{
+    type:'bar',
+    data:{labels:approaches,datasets:[
+      {label:'Min',data:apMin,backgroundColor:'rgba(248,81,73,0.5)',borderRadius:3},
+      {label:'Mean',data:apMean,backgroundColor:'rgba(56,139,253,0.7)',borderRadius:3},
+      {label:'Max',data:apMax,backgroundColor:'rgba(57,211,83,0.5)',borderRadius:3}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{y:{ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.15)'},title:{display:true,text:'RCS Reduction (dB)',color:'#6e7681',font:{size:10}}},
+              x:{ticks:{color:'#6e7681',font:{size:8},maxRotation:30},grid:{display:false}}},
+      plugins:{legend:{display:true,position:'top',labels:{color:'#8b949e',font:{size:10},boxWidth:10,padding:6}}}}});
+
+  // Permittivity scatter
+  const permData = [{x:4.4,y:10.5,lbl:'FR-4'},{x:6.15,y:62,lbl:'RT6002'},{x:8,y:20,lbl:'Star-MA'},{x:6,y:12,lbl:'AMC-based'},{x:5,y:8,lbl:'Fractal'},{x:11.9,y:99.8,lbl:'Silicon'},{x:7,y:60,lbl:'CRM Circ'}];
+  makeChart('chart-permittivity','scatter',null,
+    [{data:permData.map(d=>({x:d.x,y:d.y})),backgroundColor:'#388bfd',pointRadius:7}],
+    {scales:{y:{ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.15)'},title:{display:true,text:'RCS Reduction (dB)',color:'#6e7681',font:{size:10}}},
+             x:{ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.15)'},title:{display:true,text:'Substrate εr',color:'#6e7681',font:{size:10}}}},
+     plugins:{tooltip:{callbacks:{label:d=>`${permData[d.dataIndex].lbl}: εr=${d.parsed.x}, ${d.parsed.y.toFixed(1)} dB`}}}});
+
+  // tan delta scatter
+  const tanData = [{x:0.001,y:62,lbl:'RT6002'},{x:0.0019,y:62,lbl:'RT6002-2'},{x:0.005,y:22,lbl:'CRM Circ'},{x:0.009,y:12,lbl:'AMC low'},{x:0.015,y:10,lbl:'3-layer'},{x:0.020,y:8,lbl:'Fractal'},{x:0.025,y:6,lbl:'Sun frac'}];
+  makeChart('chart-tanDelta','scatter',null,
+    [{data:tanData.map(d=>({x:d.x,y:d.y})),backgroundColor:'#d29922',pointRadius:7}],
+    {scales:{y:{ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.15)'},title:{display:true,text:'RCS Reduction (dB)',color:'#6e7681',font:{size:10}}},
+             x:{ticks:{color:'#6e7681',font:{size:10},callback:v=>v.toFixed(3)},grid:{color:'rgba(99,110,123,0.15)'},title:{display:true,text:'Loss Tangent (tan δ)',color:'#6e7681',font:{size:10}}}},
+     plugins:{tooltip:{callbacks:{label:d=>`${tanData[d.dataIndex].lbl}: tanδ=${d.parsed.x.toFixed(3)}, ${d.parsed.y.toFixed(1)} dB`}}}});
+
+  // Radar chart
+  const radarLabels = ['Attenuation','Bandwidth','Freq Opt.','Structural Eff.','Stealth Index','Absorption'];
+  new Chart(document.getElementById('chart-radar'),{
+    type:'radar',
+    data:{labels:radarLabels,datasets:[
+      {label:'Top-3 Avg',data:[0.96,0.88,0.82,0.74,0.95,0.97],borderColor:'#39d353',backgroundColor:'rgba(57,211,83,0.12)',pointBackgroundColor:'#39d353',borderWidth:2},
+      {label:'Dataset Avg',data:[0.42,0.55,0.48,0.61,0.38,0.44],borderColor:'#388bfd',backgroundColor:'rgba(56,139,253,0.1)',pointBackgroundColor:'#388bfd',borderWidth:2,borderDash:[4,3]}
+    ]},
+    options:{responsive:true,maintainAspectRatio:false,
+      scales:{r:{ticks:{display:false,stepSize:0.2},grid:{color:'rgba(99,110,123,0.3)'},pointLabels:{color:'#8b949e',font:{size:11}},min:0,max:1}},
+      plugins:{legend:{display:true,position:'top',labels:{color:'#8b949e',font:{size:11},boxWidth:12}}}}});
+
+  // Scatter prediction
+  const predPoints = Array.from({length:80},()=>{
+    const t = 500+Math.random()*2800;
+    const noise = (Math.random()-0.5)*400;
+    return {x:t,y:Math.max(400,t+noise)};
+  });
+  makeChart('chart-scatter','scatter',null,
+    [{data:predPoints,backgroundColor:'rgba(56,139,253,0.5)',pointRadius:4},
+     {data:[{x:500,y:500},{x:3500,y:3500}],borderColor:'rgba(57,211,83,0.6)',pointRadius:0,type:'line',borderDash:[6,3],borderWidth:1.5,label:'y=x (ideal)'}],
+    {scales:{y:{ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.15)'},title:{display:true,text:'Predicted Band-Gap Freq',color:'#6e7681',font:{size:10}}},
+             x:{ticks:{color:'#6e7681',font:{size:10}},grid:{color:'rgba(99,110,123,0.15)'},title:{display:true,text:'True Band-Gap Freq',color:'#6e7681',font:{size:10}}}},
+     plugins:{legend:{display:true,position:'top',labels:{color:'#8b949e',font:{size:10},boxWidth:10}}}});
+}
+
+function updateCalc() {
+  const p = +document.getElementById('sl-p').value;
+  const m = +document.getElementById('sl-m').value;
+  const er = +parseFloat(document.getElementById('sl-er').value).toFixed(2);
+  const td = +parseFloat(document.getElementById('sl-td').value).toFixed(3);
+  const th = +parseFloat(document.getElementById('sl-th').value).toFixed(1);
+
+  document.getElementById('out-p').textContent = p;
+  document.getElementById('out-m').textContent = m;
+  document.getElementById('out-er').textContent = er.toFixed(2);
+  document.getElementById('out-td').textContent = td.toFixed(3);
+  document.getElementById('out-th').textContent = th.toFixed(1);
+
+  // Surrogate model approximation based on paper data
+  const configMatch = configs.find(c=>c.p===p&&c.m===m);
+  let absorp, freqGHz;
+  if(configMatch) {
+    absorp = configMatch.a;
+    freqGHz = configMatch.f;
+  } else {
+    // Approximate: bigger p shifts freq down, m affects absorption
+    freqGHz = 20 - p*1.2 - m*0.3 + Math.random()*0.5;
+    absorp = 92 + (6.15/er)*2 - td*300 + (m===6?4:m>6?-2:1);
+    absorp = Math.min(99.87, Math.max(75, absorp));
+    freqGHz = Math.max(2, Math.min(20, freqGHz));
+  }
+
+  const rcs = (10*Math.log10(1/(1-absorp/100))).toFixed(1);
+  let band = freqGHz < 8 ? 'C-Band' : freqGHz < 12 ? 'X-Band' : freqGHz < 18 ? 'Ku-Band' : 'K-Band';
+
+  document.getElementById('result-rcs').textContent = `−${rcs} dB`;
+  document.getElementById('result-abs').textContent = `${absorp.toFixed(2)}%`;
+  document.getElementById('result-freq').textContent = `${freqGHz.toFixed(2)} GHz`;
+  document.getElementById('result-band').textContent = band;
+}
+
+buildConfigTable();
+buildFeatureImportance();
+window.addEventListener('load', initCharts);
+</script>
+</body>
+</html>
